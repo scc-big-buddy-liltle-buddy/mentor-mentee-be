@@ -1,34 +1,50 @@
-from pydantic import BaseModel
-from app.db import db
-from app.models import Mentee, Mentor, Match, Group, MatchMentee
-from app.utils.array import find_common_element
-from typing import List, Optional
 import datetime
-import uuid
 import math
+import uuid
+
+from typing import List, Optional
+
+from app.models import (
+    Group, Match, MatchMentee, Mentee, Mentor
+)
+from app.utils.array import find_common_element
+from app.utils.selfintro_similarity import calculateSelfIntroScore
+from app.utils.global_matching import generate_global_match
 
 
 def calculateMatchingRate(mentee:Mentee, mentor:Mentor):
     total_points = 0
     # Accessing attributes using dict[key]
-    if (mentee['education']['major'] == mentor['occupation']['industry']):
+    if (mentee.education.major == mentor.occupation.industry):
         total_points += 2
         
     # Assuming find_common_element is a helper function you've defined
-    wanted_fields = find_common_element(mentee['mentee']['industries'], mentor['mentor']['industries'])
+    wanted_fields = find_common_element(mentee.mentee.industries, mentor.mentor.industries)
     total_points += len(wanted_fields) * 1
     
-    wanted_soft_skills = find_common_element(mentee['mentee']['softSkills'], mentor['mentor']['softSkills'])
+    wanted_soft_skills = find_common_element(mentee.mentee.softSkills, mentor.mentor.softSkills)
     total_points += len(wanted_soft_skills) * 2   
         
-    if(mentee['gender'] == mentor['gender']):
+    if(mentee.gender == mentor.gender):
         total_points += 1
     
-    if(mentee['education']['currentSchoolYear'] == mentor['mentor']['preferredMenteeCollegeYear']):
+    if(mentee.education.currentSchoolYear == mentor.mentor.preferredMenteeCollegeYear):
         total_points += 1 
+
+    selfintro_similarity_score = calculateSelfIntroScore(mentee, mentor)
+    total_points += selfintro_similarity_score
+    
     return total_points
 
-    
+# High level switch to determine which generate group method to use
+def generate_match(mentees, mentors, method="greedy"):
+    if method == "global":
+        return generate_global_match(
+            mentees, mentors,
+            max_group_size=math.ceil(len(mentees)/len(mentors))
+        )
+    return generateGroup(mentees, mentors)
+
 #  Read list of mentees and mentors from mentor.json and mentee.json
 #  Generate a match with the mentees and mentors
 
@@ -81,12 +97,7 @@ def generateGroup(mentees, mentors, matchName:Optional[str] = None):
         "groups": groups,
         "matchName": matchName if matchName else "Match " + str(datetime.datetime.now())
     }
-    
-    
-    
-    
+
     return new_match        
             
 
-
-            

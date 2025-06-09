@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.db import get_all_object, db
-from app.utils.matching import generateGroup
+from app.utils.matching import generate_match
 from app.models import Mentor
 
 router = APIRouter()

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
 from app.db import get_all_object, db
-from app.utils.matching import generateGroup
+from app.utils.matching import generate_match
 from pydantic import BaseModel
 import pandas as pd
 
@@ -73,7 +73,7 @@ async def create_new_match(request: NewMatchBody):
     # Filter all mentees who have been matched
     # Filter all mentor who have been matched with maximum mentee they need
 
-    result = generateGroup(mentees, mentors, matchName)
+    result = generate_match(mentees, mentors, matchName)
 
     db.child("matches").push(result)
     return result
@@ -248,7 +248,7 @@ async def match_by_file(data: UploadFile  = File(...), matchName: str = ""):
         db.child("mentees").set(mentees)
 
         # Make mentor-mentee match
-        result = generateGroup(mentees, mentors, matchName)
+        result = generate_match(mentees, mentors, matchName)
 
         db.child("matches").push(result)
 
